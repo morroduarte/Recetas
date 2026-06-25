@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6 Platillos · Cocina Oriental IHH</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #FAF7F2;
+    --ink: #1A1612;
+    --ink-muted: #6B6258;
+    --ink-faint: #9A9086;
+    --red: #B5482F;
+    --red-light: #FAECE7;
+    --gold: #C4901A;
+    --gold-light: #FAEEDA;
+    --green: #0F6E56;
+    --green-light: #E1F5EE;
+    --border: rgba(26,22,18,0.1);
+    --radius: 12px;
+  }
+
+  html, body { height: 100%; background: var(--cream); font-family: 'Inter', sans-serif; color: var(--ink); overflow: hidden; }
+
+  /* ---- HEADER ---- */
+  header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem; height: 56px;
+    background: var(--cream); border-bottom: 1px solid var(--border);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--red); }
+  .brand-name { font-family: 'Playfair Display', serif; font-size: 16px; color: var(--ink); }
+  .brand-sub { font-size: 12px; color: var(--ink-faint); margin-left: 4px; }
+  .nav-controls { display: flex; align-items: center; gap: 12px; }
+  .slide-counter { font-size: 13px; color: var(--ink-muted); min-width: 60px; text-align: center; }
+  .nav-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 1px solid var(--border); background: transparent;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: var(--ink); transition: background 0.15s;
+  }
+  .nav-btn:hover { background: rgba(26,22,18,0.06); }
+  .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* ---- DOTS ---- */
+  .dots {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--border); cursor: pointer; transition: all 0.2s;
+  }
+  .dot.active { width: 20px; border-radius: 3px; background: var(--red); }
+
+  /* ---- SLIDES WRAPPER ---- */
+  .slides-wrapper {
+    position: fixed; top: 56px; left: 0; right: 0; bottom: 0;
+    overflow: hidden;
+  }
+  .slides-track {
+    display: flex; height: 100%;
+    transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+  .slide {
+    min-width: 100%; height: 100%;
+    display: grid; grid-template-columns: 1fr 1fr;
+  }
+
+  /* ---- IMAGE PANEL ---- */
+  .img-panel {
+    position: relative; overflow: hidden;
+  }
+  .img-panel img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform 0.6s ease;
+  }
+  .img-panel:hover img { transform: scale(1.03); }
+  .img-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(to top, rgba(26,22,18,0.7) 0%, transparent 100%);
+    padding: 2rem 1.75rem 1.5rem;
+  }
+  .img-tag {
+    display: inline-block; font-size: 11px; font-weight: 500; letter-spacing: 0.08em;
+    text-transform: uppercase; padding: 4px 10px; border-radius: 20px;
+    color: rgba(255,255,255,0.9); border: 1px solid rgba(255,255,255,0.3);
+    margin-bottom: 8px;
+  }
+  .img-title {
+    font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 600;
+    color: #fff; line-height: 1.2;
+  }
+
+  /* ---- CONTENT PANEL ---- */
+  .content-panel {
+    padding: 2.5rem 2.5rem 1.5rem;
+    display: flex; flex-direction: column; gap: 1.5rem;
+    overflow-y: auto;
+  }
+  .section-label {
+    font-size: 10px; font-weight: 500; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink-faint); margin-bottom: 10px;
+  }
+  .historia-list, .tecnica-list {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .historia-item {
+    display: flex; gap: 10px; align-items: flex-start;
+    font-size: 13px; line-height: 1.6; color: var(--ink);
+  }
+  .historia-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    flex-shrink: 0; margin-top: 6px;
+  }
+  .tecnica-item {
+    display: flex; gap: 10px; align-items: flex-start;
+    font-size: 13px; line-height: 1.6; color: var(--ink);
+  }
+  .tecnica-num {
+    font-size: 11px; font-weight: 500;
+    width: 20px; height: 20px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .divider { border: none; border-top: 1px solid var(--border); }
+
+  /* ---- SLIDE COLORS ---- */
+  .slide-1 .historia-dot, .slide-1 .section-label-accent { color: #C4901A; background: #C4901A; }
+  .slide-1 .tecnica-num { background: var(--gold-light); color: var(--gold); }
+  .slide-2 .historia-dot { background: var(--red); }
+  .slide-2 .tecnica-num { background: var(--red-light); color: var(--red); }
+  .slide-3 .historia-dot { background: var(--green); }
+  .slide-3 .tecnica-num { background: var(--green-light); color: var(--green); }
+  .slide-4 .historia-dot { background: #533AB7; }
+  .slide-4 .tecnica-num { background: #EEEDFE; color: #533AB7; }
+  .slide-5 .historia-dot { background: #A32D2D; }
+  .slide-5 .tecnica-num { background: #FCEBEB; color: #A32D2D; }
+  .slide-6 .historia-dot { background: var(--green); }
+  .slide-6 .tecnica-num { background: var(--green-light); color: var(--green); }
+
+  /* keyboard hint */
+  .kbd-hint {
+    position: fixed; bottom: 1rem; right: 1.5rem;
+    font-size: 11px; color: var(--ink-faint);
+    display: flex; gap: 4px; align-items: center;
+  }
+  kbd {
+    font-family: 'Inter', sans-serif; font-size: 10px;
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 1px 5px; background: white; color: var(--ink-muted);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-dot"></div>
+    <span class="brand-name">IHH</span>
+    <span class="brand-sub">Cocina Oriental · 6 Platillos</span>
+  </div>
+  <div class="dots" id="dots"></div>
+  <div class="nav-controls">
+    <span class="slide-counter" id="counter">1 / 6</span>
+    <button class="nav-btn" id="prev" onclick="go(-1)">←</button>
+    <button class="nav-btn" id="next" onclick="go(1)">→</button>
+  </div>
+</header>
+
+<div class="slides-wrapper">
+  <div class="slides-track" id="track">
+
+    <!-- SLIDE 1: Ravioles Chinos -->
+    <div class="slide slide-1">
+      <div class="img-panel">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/BoiledDumplings.jpg/800px-BoiledDumplings.jpg" alt="Ravioles chinos jiaozi" loading="eager" onerror="this.src='https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=800'">
+        <div class="img-overlay">
+          <span class="img-tag">China del Norte</span>
+          <p class="img-title">Ravioles Chinos<br>Jiaozi 饺子</p>
+        </div>
+      </div>
+      <div class="content-panel">
+        <div>
+          <p class="section-label">Historia y origen</p>
+          <div class="historia-list">
+            <div class="historia-item"><span class="historia-dot"></span>Más de 1,800 años de historia — dinastía Han (206 a.C.)</div>
+            <div class="historia-item"><span class="historia-dot"></span>Nombre filosófico 'Hundun': lo que no tiene forma fija</div>
+            <div class="historia-item"><span class="historia-dot"></span>Forma de media luna consolidada en el norte de China en el siglo VI</div>
+            <div class="historia-item"><span class="historia-dot"></span>Simbolizan reunión familiar y buena fortuna en Año Nuevo Chino</div>
+            <div class="historia-item"><span class="historia-dot"></span>Tradición: esconder una moneda dentro para dar prosperidad al que la encuentre</div>
+          </div>
+        </div>
+        <hr class="divider">
+        <div>
+          <p class="section-label">Técnica de preparación</p>
+          <div class="tecnica-list">
+            <div class="tecnica-item"><span class="tecnica-num">1</span>Masa caliente (agua hirviendo): produce textura suave y elástica</div>
+            <div class="tecnica-item"><span class="tecnica-num">2</span>Relleno: cerdo 80/20 + col exprimida + zanahoria + jengibre + ajo</div>
+            <div class="tecnica-item"><span class="tecnica-num">3</span>Exprimir la col es obligatorio — el exceso de agua rompe la masa</div>
+            <div class="tecnica-item"><span class="tecnica-num">4</span>Método vapor-frito: dorar base 2 min → vapor 5 min → dorar 1 min</div>
+            <div class="tecnica-item"><span class="tecnica-num">5</span>Servir con soya + vinagre de arroz + aceite de ajonjolí</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 2: Costilla de Cerdo -->
+    <div class="slide slide-2">
+      <div class="img-panel">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Char_Siu.jpg/800px-Char_Siu.jpg" alt="Char siu costilla de cerdo" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=800'">
+        <div class="img-overlay">
+          <span class="img-tag">Cocina Cantonesa</span>
+          <p class="img-title">Costilla de Cerdo<br>Char Siu 叉燒</p>
+        </div>
+      </div>
+      <div class="content-panel">
+        <div>
+          <p class="section-label">Historia y origen</p>
+          <div class="historia-list">
+            <div class="historia-item"><span class="historia-dot"></span>Char Siu: 'asado con tenedor' — cocina cantonesa de Guangdong</div>
+            <div class="historia-item"><span class="historia-dot"></span>Raíces documentadas desde la dinastía Zhou (1046–256 a.C.)</div>
+            <div class="historia-item"><span class="historia-dot"></span>Perfeccionado en el siglo XIX: carne colgante en hornos de leña</div>
+            <div class="historia-item"><span class="historia-dot"></span>El color rojo oscuro caramelizado es su firma visual y cultural</div>
+            <div class="historia-item"><span class="historia-dot"></span>Hoy es uno de los platos chinos más reconocibles a nivel mundial</div>
+          </div>
+        </div>
+        <hr class="divider">
+        <div>
+          <p class="section-label">Técnica de preparación</p>
+          <div class="tecnica-list">
+            <div class="tecnica-item"><span class="tecnica-num">1</span>Cortar en tiras siguiendo los huesos para maximizar la superficie de sabor</div>
+            <div class="tecnica-item"><span class="tecnica-num">2</span>Marinada: soya oscura + catsup + ron + azúcar + polvo 5 especias</div>
+            <div class="tecnica-item"><span class="tecnica-num">3</span>Marinar mínimo 30 minutos — idealmente toda la noche</div>
+            <div class="tecnica-item"><span class="tecnica-num">4</span>Rejilla escoffier: el calor circula y la grasa gotea por debajo</div>
+            <div class="tecnica-item"><span class="tecnica-num">5</span>Hornear 180 °C · 45 min · superficie caramelizada brillante</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 3: Wonton Frito -->
+    <div class="slide slide-3">
+      <div class="img-panel">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Fried_wontons.jpg/800px-Fried_wontons.jpg" alt="Wonton frito" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1563245372-f21724e3856d?w=800'">
+        <div class="img-overlay">
+          <span class="img-tag">Dim Sum · Hong Kong</span>
+          <p class="img-title">Wonton Frito<br>Zha Huntun 炸餛飩</p>
+        </div>
+      </div>
+      <div class="content-panel">
+        <div>
+          <p class="section-label">Historia y origen</p>
+          <div class="historia-list">
+            <div class="historia-item"><span class="historia-dot"></span>Primeros registros — dinastía Han Occidental (206 a.C.–9 d.C.)</div>
+            <div class="historia-item"><span class="historia-dot"></span>'Wun tun' en cantonés: 'nube tragada' — referencia a flotar en el caldo</div>
+            <div class="historia-item"><span class="historia-dot"></span>Carga filosófica taoísta: 'hun tun' = caos primordial antes de la creación</div>
+            <div class="historia-item"><span class="historia-dot"></span>La versión frita nació en Hong Kong como bocado de dim sum crujiente</div>
+            <div class="historia-item"><span class="historia-dot"></span>Wontons del siglo VII encontrados conservados en Turpan, noroeste de China</div>
+          </div>
+        </div>
+        <hr class="divider">
+        <div>
+          <p class="section-label">Técnica de preparación</p>
+          <div class="tecnica-list">
+            <div class="tecnica-item"><span class="tecnica-num">1</span>Masa más delgada que la gyoza: 1 mm — formato cuadrado 10×10 cm</div>
+            <div class="tecnica-item"><span class="tecnica-num">2</span>Relleno: cerdo + hongos chinos + bambú + cebollín + jengibre</div>
+            <div class="tecnica-item"><span class="tecnica-num">3</span>Refrigerar el relleno 30 min — el calor rompe la masa en el aceite</div>
+            <div class="tecnica-item"><span class="tecnica-num">4</span>Sellar todos los bordes sin fisuras — el vapor causa salpicaduras peligrosas</div>
+            <div class="tecnica-item"><span class="tecnica-num">5</span>Freír a 170 °C en tandas pequeñas · 2–3 min · dorado uniforme</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 4: Siu Mai -->
+    <div class="slide slide-4">
+      <div class="img-panel">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Siu_mai_dim_sum.jpg/800px-Siu_mai_dim_sum.jpg" alt="Siu mai dim sum" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=800'">
+        <div class="img-overlay">
+          <span class="img-tag">Dim Sum · Vapor</span>
+          <p class="img-title">Siu Mai<br>烧卖</p>
+        </div>
+      </div>
+      <div class="content-panel">
+        <div>
+          <p class="section-label">Historia y origen</p>
+          <div class="historia-list">
+            <div class="historia-item"><span class="historia-dot"></span>Nombre: 'cocinar y vender' — nació como comida de mercado y casas de té</div>
+            <div class="historia-item"><span class="historia-dot"></span>Registros escritos desde la dinastía Song del Norte (960–1127)</div>
+            <div class="historia-item"><span class="historia-dot"></span>Viajó del norte al sur de China durante la dinastía Yuan — hace 700 años</div>
+            <div class="historia-item"><span class="historia-dot"></span>Considerado el 'rey' del dim sum cantonés junto al har gow</div>
+            <div class="historia-item"><span class="historia-dot"></span>La forma abierta arriba es su sello: muestra la calidad del relleno</div>
+          </div>
+        </div>
+        <hr class="divider">
+        <div>
+          <p class="section-label">Técnica de preparación</p>
+          <div class="tecnica-list">
+            <div class="tecnica-item"><span class="tecnica-num">1</span>Relleno: cerdo molido + camarones picados + hongos + aceite de ajonjolí</div>
+            <div class="tecnica-item"><span class="tecnica-num">2</span>Cerdo + camarón: grasa y liga + sabor y textura — proporción clave</div>
+            <div class="tecnica-item"><span class="tecnica-num">3</span>Masa menor a 0.5 mm — la más delgada de todos los dumplings</div>
+            <div class="tecnica-item"><span class="tecnica-num">4</span>Armado en canasta abierta — nunca se cierra por arriba</div>
+            <div class="tecnica-item"><span class="tecnica-num">5</span>Vapor exacto 10–12 min — más tiempo reseca el relleno</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 5: Hui Guo Rou -->
+    <div class="slide slide-5">
+      <div class="img-panel">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Twice_cooked_pork.jpg/800px-Twice_cooked_pork.jpg" alt="Hui guo rou cerdo dos veces cocido" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800'">
+        <div class="img-overlay">
+          <span class="img-tag">Sichuan · China</span>
+          <p class="img-title">Hui Guo Rou<br>回锅肉</p>
+        </div>
+      </div>
+      <div class="content-panel">
+        <div>
+          <p class="section-label">Historia y origen</p>
+          <div class="historia-list">
+            <div class="historia-item"><span class="historia-dot"></span>Literalmente 'la carne que regresa al wok' — técnica de doble cocción</div>
+            <div class="historia-item"><span class="historia-dot"></span>N° 1 entre los Diez Platos Clásicos de Sichuan (gobierno chino 2018)</div>
+            <div class="historia-item"><span class="historia-dot"></span>Documentado en el siglo X como 'carne salteada en aceite'</div>
+            <div class="historia-item"><span class="historia-dot"></span>El chile llegó a Sichuan en el siglo XVI vía Portugal — transformó el plato</div>
+            <div class="historia-item"><span class="historia-dot"></span>Tradición: los sichuaneses lo comen el 1° y 15° de cada mes</div>
+          </div>
+        </div>
+        <hr class="divider">
+        <div>
+          <p class="section-label">Técnica de preparación</p>
+          <div class="tecnica-list">
+            <div class="tecnica-item"><span class="tecnica-num">1</span>Primera cocción: hervir el cerdo 30–45 min hasta suavizarse</div>
+            <div class="tecnica-item"><span class="tecnica-num">2</span>Rebanar muy fino (5 mm) en frío para que absorba el sabor completo</div>
+            <div class="tecnica-item"><span class="tecnica-num">3</span>Segunda cocción en wok: sofreír chiles, ajo, poro y col</div>
+            <div class="tecnica-item"><span class="tecnica-num">4</span>Alma del plato: doubanjiang — pasta de frijol fermentado de Pixian</div>
+            <div class="tecnica-item"><span class="tecnica-num">5</span>Pimienta de Sichuan: efecto málà — adormecimiento en la lengua</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 6: Pollo en Hoja de Plátano -->
+    <div class="slide slide-6">
+      <div class="img-panel">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Lo_Mai_Gai.jpg/800px-Lo_Mai_Gai.jpg" alt="Pollo al vapor en hoja de plátano" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=800'">
+        <div class="img-overlay">
+          <span class="img-tag">China · Tailandia</span>
+          <p class="img-title">Pollo al Vapor<br>en Hoja de Plátano</p>
+        </div>
+      </div>
+      <div class="content-panel">
+        <div>
+          <p class="section-label">Historia y origen</p>
+          <div class="historia-list">
+            <div class="historia-item"><span class="historia-dot"></span>Técnica ligada al cultivo del plátano en Asia — más de 8,000 años</div>
+            <div class="historia-item"><span class="historia-dot"></span>Documentada en China desde la dinastía Tang (618–907 d.C.)</div>
+            <div class="historia-item"><span class="historia-dot"></span>Compartida entre Guangdong, Yunnan y Tailandia por siglos de migración</div>
+            <div class="historia-item"><span class="historia-dot"></span>En Tailandia asociada a cocina ceremonial y ofrendas en templos budistas</div>
+            <div class="historia-item"><span class="historia-dot"></span>El paquete se sirve cerrado — el comensal lo abre en la mesa</div>
+          </div>
+        </div>
+        <hr class="divider">
+        <div>
+          <p class="section-label">Técnica de preparación</p>
+          <div class="tecnica-list">
+            <div class="tecnica-item"><span class="tecnica-num">1</span>Pasar las hojas por fuego antes de doblar — se ablandan sin cocerse</div>
+            <div class="tecnica-item"><span class="tecnica-num">2</span>Hoja sin suavizar = se quiebra al armar y el vapor escapa</div>
+            <div class="tecnica-item"><span class="tecnica-num">3</span>Marinada: soya oscura + ajonjolí + jengibre + chile + hongos</div>
+            <div class="tecnica-item"><span class="tecnica-num">4</span>Marinar mínimo 30 min en refrigeración · dividir en 8 porciones iguales</div>
+            <div class="tecnica-item"><span class="tecnica-num">5</span>Vapor exacto 20 min — más tiempo reseca el pollo</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="kbd-hint">
+  <kbd>←</kbd><kbd>→</kbd> navegar
+</div>
+
+<script>
+let cur = 0;
+const total = 6;
+const track = document.getElementById('track');
+const counter = document.getElementById('counter');
+const dotsEl = document.getElementById('dots');
+
+function buildDots() {
+  dotsEl.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === cur ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  }
+}
+
+function update() {
+  track.style.transform = `translateX(-${cur * 100}%)`;
+  counter.textContent = `${cur + 1} / ${total}`;
+  document.getElementById('prev').disabled = cur === 0;
+  document.getElementById('next').disabled = cur === total - 1;
+  buildDots();
+}
+
+function go(d) { const n = cur + d; if (n >= 0 && n < total) { cur = n; update(); } }
+function goTo(i) { cur = i; update(); }
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') go(1);
+  if (e.key === 'ArrowLeft') go(-1);
+});
+
+update();
+</script>
+</body>
+</html>
