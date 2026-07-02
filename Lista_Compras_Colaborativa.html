@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lista de Compras · IHH Oriental</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Compras IHH">
+<meta name="theme-color" content="#b5482f">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #FAF7F2; --card: #FFFFFF; --border: rgba(26,22,18,0.1);
+    --ink: #1A1612; --ink2: #6B6258; --ink3: #9A9086;
+    --red: #B5482F; --red-bg: #FAECE7;
+    --teal: #0F6E56; --teal-bg: #E1F5EE;
+    --amber: #854F0B; --amber-bg: #FAEEDA;
+    --purple: #3C3489; --purple-bg: #EEEDFE;
+    --green: #1a7a3f; --radius: 10px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  body { font-family: var(--font); background: var(--bg); color: var(--ink); min-height: 100vh; }
+  .wrap { max-width: 600px; margin: 0 auto; padding: 16px 14px 90px; }
+
+  header { margin-bottom: 1.25rem; }
+  .header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+  h1 { font-size: 20px; font-weight: 600; }
+  .subtitle { font-size: 12px; color: var(--ink2); }
+  .recetas-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .receta-tag { font-size: 11px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 2px 8px; color: var(--ink2); }
+
+  /* Status bar */
+  .status-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; border-radius: var(--radius);
+    background: var(--card); border: 1px solid var(--border);
+    margin-bottom: 1rem; font-size: 12px;
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .status-dot.connecting { background: #C4901A; animation: pulse 1s infinite; }
+  .status-dot.connected { background: var(--green); }
+  .status-dot.error { background: var(--red); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .status-text { color: var(--ink2); flex: 1; }
+  .online-count { font-size: 11px; color: var(--ink3); }
+
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 8px; }
+  .progress-bar-wrap { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-bar { height: 100%; background: var(--red); border-radius: 3px; transition: width 0.3s; }
+  .progress-text { font-size: 12px; color: var(--ink2); white-space: nowrap; }
+  .btn { font-family: var(--font); font-size: 12px; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--card); color: var(--ink); cursor: pointer; white-space: nowrap; }
+  .btn:active { background: var(--bg); }
+
+  .section { margin-bottom: 1.25rem; }
+  .section-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding: 0 2px; }
+  .section-title { font-size: 13px; font-weight: 600; }
+  .section-count { font-size: 11px; color: var(--ink3); }
+
+  .item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 12px; border-radius: var(--radius);
+    background: var(--card); border: 1px solid var(--border);
+    margin-bottom: 4px; cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+  }
+  .item.done { background: var(--bg); opacity: 0.55; }
+  .item.done .item-name { text-decoration: line-through; }
+  .item.loading { pointer-events: none; }
+
+  .checkbox {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 2px solid var(--border); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 1px; transition: all 0.15s;
+  }
+  .checkbox.checked { border-color: var(--green); background: var(--green); }
+  .checkbox.checked::after { content: "✓"; font-size: 12px; color: white; font-weight: 700; }
+  .checkbox.loading-spin { border-top-color: var(--amber); animation: spin 0.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .item-body { flex: 1; min-width: 0; }
+  .item-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .item-name { font-size: 14px; font-weight: 500; }
+  .item-qty { font-size: 13px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+  .item-meta { display: flex; gap: 5px; margin-top: 4px; flex-wrap: wrap; align-items: center; }
+  .recipe-pill { font-size: 10px; padding: 1px 7px; border-radius: 10px; }
+  .item-obs { font-size: 11px; color: var(--ink3); }
+  .who-badge { font-size: 10px; color: var(--green); font-weight: 500; margin-top: 2px; }
+
+  .red .section-title, .red .item-qty { color: var(--red); }
+  .red .recipe-pill { background: var(--red-bg); color: var(--red); }
+  .teal .section-title, .teal .item-qty { color: var(--teal); }
+  .teal .recipe-pill { background: var(--teal-bg); color: var(--teal); }
+  .amber .section-title, .amber .item-qty { color: var(--amber); }
+  .amber .recipe-pill { background: var(--amber-bg); color: var(--amber); }
+  .purple .section-title, .purple .item-qty { color: var(--purple); }
+  .purple .recipe-pill { background: var(--purple-bg); color: var(--purple); }
+
+  /* Name modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200; padding: 20px;
+  }
+  .modal {
+    background: var(--card); border-radius: 16px;
+    padding: 24px; max-width: 320px; width: 100%;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  }
+  .modal h2 { font-size: 18px; margin-bottom: 6px; }
+  .modal p { font-size: 13px; color: var(--ink2); margin-bottom: 16px; }
+  .modal input {
+    width: 100%; padding: 10px 14px; border-radius: var(--radius);
+    border: 1px solid var(--border); font-family: var(--font);
+    font-size: 15px; outline: none; margin-bottom: 12px;
+    background: var(--bg);
+  }
+  .modal input:focus { border-color: var(--red); }
+  .modal-btn {
+    width: 100%; padding: 12px; border-radius: var(--radius);
+    border: none; background: var(--red); color: white;
+    font-family: var(--font); font-size: 15px; font-weight: 600;
+    cursor: pointer;
+  }
+
+  .bottom-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--card); border-top: 1px solid var(--border);
+    padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .bottom-text { font-size: 12px; color: var(--ink2); }
+  .bottom-actions { display: flex; gap: 8px; }
+</style>
+</head>
+<body>
+
+<!-- Modal para pedir nombre -->
+<div class="modal-overlay" id="name-modal">
+  <div class="modal">
+    <h2>¡Hola! 👋</h2>
+    <p>¿Cómo te llamas? Así tus compañeros saben quién marcó cada ingrediente.</p>
+    <input type="text" id="name-input" placeholder="Tu nombre" maxlength="20" autocomplete="off" />
+    <button class="modal-btn" onclick="saveName()">Entrar a la lista</button>
+  </div>
+</div>
+
+<div class="wrap" id="main-content" style="display:none;">
+  <header>
+    <div class="header-top">
+      <div>
+        <h1>Lista de Compras</h1>
+        <p class="subtitle">IHH · Cocina Oriental · Colaborativa en tiempo real</p>
+      </div>
+      <span style="font-size:24px;">🛒</span>
+    </div>
+    <div class="recetas-tags">
+      <span class="receta-tag">Camarón con Fideo Crujiente</span>
+      <span class="receta-tag">Char Siu</span>
+      <span class="receta-tag">Cerdo de Cinco Sabores</span>
+      <span class="receta-tag">Pato Pekín</span>
+      <span class="receta-tag">Pollo a la Naranja</span>
+    </div>
+  </header>
+
+  <div class="status-bar">
+    <div class="status-dot connecting" id="status-dot"></div>
+    <span class="status-text" id="status-text">Conectando...</span>
+    <span class="online-count" id="online-count"></span>
+  </div>
+
+  <div class="toolbar">
+    <div class="progress-bar-wrap"><div class="progress-bar" id="pbar" style="width:0%"></div></div>
+    <span class="progress-text" id="ptext">0 / 33</span>
+    <button class="btn" onclick="resetAll()">↺ Reiniciar</button>
+  </div>
+
+  <div id="lista"></div>
+</div>
+
+<div class="bottom-bar" id="bottom-bar" style="display:none;">
+  <span class="bottom-text" id="bottom-text">Cargando...</span>
+  <span style="font-size:12px; color:var(--ink3);" id="user-label"></span>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAXxQ7GujPJrrNJ3W3K_gv8INpXlJLsb1M",
+  authDomain: "lista-5-recetas.firebaseapp.com",
+  databaseURL: "https://lista-5-recetas-default-rtdb.firebaseio.com",
+  projectId: "lista-5-recetas",
+  storageBucket: "lista-5-recetas.firebasestorage.app",
+  messagingSenderId: "586686198265",
+  appId: "1:586686198265:web:440520088e0ca48bfa4d28"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const listRef = ref(db, 'lista_compras');
+
+const secciones = [
+  { cat:"🥩 Proteínas y Mariscos", color:"red", items:[
+    { id:"cam_u10", nombre:"Camarones U-10", qty:"400 g", recetas:["Camarón con Fideo"], obs:"Pelados, desvenados" },
+    { id:"cerdo_mac", nombre:"Carne de cerdo maciza", qty:"500 g", recetas:["Cerdo de Cinco Sabores"], obs:"Con algo de grasa" },
+    { id:"lomo_cerdo", nombre:"Lomo de cerdo", qty:"1.5 kg", recetas:["Char Siu"], obs:"Entero" },
+    { id:"pato", nombre:"Pato entero", qty:"1 pza (~2 kg)", recetas:["Pato Pekín"], obs:"Pedir con anticipación" },
+    { id:"pollo_pech", nombre:"Pechuga de pollo", qty:"1 pza", recetas:["Pollo a la Naranja"], obs:"Cubos de 3 cm" },
+  ]},
+  { cat:"🥬 Frutas y Verduras", color:"teal", items:[
+    { id:"ajo", nombre:"Ajo", qty:"4 dientes + 15 g", recetas:["Char Siu","Cerdo de Cinco Sabores"], obs:"Triturado y picado" },
+    { id:"cebolla_cam", nombre:"Cebolla de cambray", qty:"1 pza + 6 pzas", recetas:["Cerdo de Cinco Sabores","Pato Pekín"], obs:"Picada y en tiras" },
+    { id:"naranja", nombre:"Naranja", qty:"4-5 pzas", recetas:["Pollo a la Naranja"], obs:"Para jugo y ralladura" },
+    { id:"pepino", nombre:"Pepino", qty:"1 pza", recetas:["Pato Pekín"], obs:"Tiras finas" },
+  ]},
+  { cat:"🏮 Abarrotes Orientales", color:"amber", items:[
+    { id:"aceite_chile", nombre:"Aceite con chile frito", qty:"30 ml", recetas:["Cerdo de Cinco Sabores"], obs:"Chiu Chow o similar" },
+    { id:"aceite_ajon", nombre:"Aceite de ajonjolí", qty:"5 ml", recetas:["Camarón con Fideo"], obs:"Sazonador" },
+    { id:"colorante", nombre:"Colorante rojo comestible", qty:"al gusto", recetas:["Char Siu"], obs:"Opcional" },
+    { id:"cacahuate", nombre:"Crema de cacahuate", qty:"30 g", recetas:["Cerdo de Cinco Sabores"], obs:"Natural, sin azúcar" },
+    { id:"fideo_chino", nombre:"Fideo chino delgado", qty:"50 g", recetas:["Camarón con Fideo"], obs:"Tienda asiática" },
+    { id:"glucosa", nombre:"Glucosa / miel de maíz", qty:"30 g", recetas:["Pato Pekín"], obs:"Para barniz de la piel" },
+    { id:"cinco_esp", nombre:"Polvo 5 especias", qty:"8 g total", recetas:["Char Siu","Pato Pekín"], obs:"5 g + 3 g" },
+    { id:"soya_osc", nombre:"Salsa de soya oscura", qty:"105 ml total", recetas:["Char Siu","Cerdo de Cinco Sabores"], obs:"60 ml + 45 ml" },
+    { id:"hoisin", nombre:"Salsa hoisin", qty:"285 ml total", recetas:["Char Siu","Pato Pekín","Pollo a la Naranja"], obs:"Frasco grande — 60+100+125 ml" },
+    { id:"vinagre", nombre:"Vinagre blanco", qty:"15 ml", recetas:["Cerdo de Cinco Sabores"], obs:"De arroz ideal" },
+    { id:"vino_arroz", nombre:"Vino de arroz / sake", qty:"60 ml", recetas:["Char Siu"], obs:"O sake como sustituto" },
+  ]},
+  { cat:"🛒 Abarrotes Generales", color:"purple", items:[
+    { id:"aceite_veg", nombre:"Aceite vegetal", qty:"500 ml", recetas:["Camarón con Fideo"], obs:"Fritura profunda" },
+    { id:"azucar", nombre:"Azúcar blanca", qty:"113 g total", recetas:["Cerdo de Cinco Sabores","Pato Pekín","Pollo a la Naranja"], obs:"3 + 50 + 60 g" },
+    { id:"azucar_mor", nombre:"Azúcar morena", qty:"15 g", recetas:["Char Siu"], obs:"1 cucharada" },
+    { id:"catsup", nombre:"Catsup", qty:"60 ml", recetas:["Char Siu"], obs:"4 cucharadas" },
+    { id:"fecula", nombre:"Fécula de maíz", qty:"70 g total", recetas:["Pollo a la Naranja"], obs:"60 g empanizado + 10 g salsa" },
+    { id:"harina", nombre:"Harina de trigo", qty:"130 g total", recetas:["Camarón con Fideo","Pollo a la Naranja"], obs:"100 + 30 g" },
+    { id:"huevo", nombre:"Huevo", qty:"3 pzas", recetas:["Camarón con Fideo","Pollo a la Naranja"], obs:"2 + 1 pza" },
+    { id:"miel", nombre:"Miel de abeja", qty:"60 ml", recetas:["Char Siu"], obs:"4 cucharadas" },
+    { id:"cayena", nombre:"Pimienta cayena", qty:"1 pizca", recetas:["Pollo a la Naranja"], obs:"Picor sutil" },
+    { id:"ron", nombre:"Ron", qty:"5 ml", recetas:["Pato Pekín"], obs:"Para interior del pato" },
+    { id:"sal", nombre:"Sal", qty:"al gusto", recetas:["Cerdo de Cinco Sabores","Pato Pekín"], obs:"" },
+    { id:"tortillas", nombre:"Tortillas de harina pequeñas", qty:"16 pzas", recetas:["Pato Pekín"], obs:"Tipo mandarin pancake" },
+    { id:"vino_blanco", nombre:"Vino blanco", qty:"125 ml", recetas:["Cerdo de Cinco Sabores"], obs:"Para cocción del cerdo" },
+  ]},
+];
+
+const total = secciones.reduce((a,s) => a + s.items.length, 0);
+let firebaseData = {};
+let userName = '';
+let pendingToggle = null;
+
+// --- Modal de nombre ---
+window.saveName = function() {
+  const input = document.getElementById('name-input').value.trim();
+  if (!input) { document.getElementById('name-input').focus(); return; }
+  userName = input;
+  localStorage.setItem('ihh_nombre', userName);
+  document.getElementById('name-modal').style.display = 'none';
+  document.getElementById('main-content').style.display = 'block';
+  document.getElementById('bottom-bar').style.display = 'flex';
+  document.getElementById('user-label').textContent = '👤 ' + userName;
+  startListening();
+};
+
+document.getElementById('name-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') window.saveName();
+});
+
+// Recuperar nombre guardado
+const savedName = localStorage.getItem('ihh_nombre');
+if (savedName) {
+  document.getElementById('name-input').value = savedName;
+}
+
+// --- Firebase listener ---
+function startListening() {
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-text');
+
+  onValue(listRef, (snapshot) => {
+    firebaseData = snapshot.val() || {};
+    dot.className = 'status-dot connected';
+    txt.textContent = 'En tiempo real · cambios sincronizados';
+    render();
+  }, (error) => {
+    dot.className = 'status-dot error';
+    txt.textContent = 'Sin conexión — revisa internet';
+  });
+}
+
+// --- Toggle ---
+window.toggle = async function(itemId) {
+  if (pendingToggle === itemId) return;
+  pendingToggle = itemId;
+
+  const el = document.querySelector(`[data-id="${itemId}"]`);
+  const cb = el?.querySelector('.checkbox');
+  if (cb) { cb.className = 'checkbox loading-spin'; }
+
+  const current = firebaseData[itemId];
+  const updates = {};
+  if (current && current.comprado) {
+    updates[itemId] = null; // eliminar = desmarcar
+    await remove(ref(db, `lista_compras/${itemId}`));
+  } else {
+    updates[itemId] = { comprado: true, quien: userName, cuando: Date.now() };
+    await update(listRef, updates);
+  }
+  pendingToggle = null;
+};
+
+// --- Reset ---
+window.resetAll = async function() {
+  if (!confirm('¿Reiniciar la lista para todos? Esto desmarcará todos los ingredientes.')) return;
+  await remove(listRef);
+};
+
+// --- Render ---
+function render() {
+  const done = Object.values(firebaseData).filter(v => v && v.comprado).length;
+  const pct = Math.round((done/total)*100);
+  document.getElementById('pbar').style.width = pct + '%';
+  document.getElementById('ptext').textContent = `${done} / ${total}`;
+  const pending = total - done;
+  document.getElementById('bottom-text').textContent =
+    pending === 0 ? '¡Lista completa! 🎉' : `${pending} ingrediente${pending!==1?'s':''} pendiente${pending!==1?'s':''}`;
+
+  document.getElementById('lista').innerHTML = secciones.map(sec => `
+    <div class="section ${sec.color}">
+      <div class="section-header">
+        <span class="section-title">${sec.cat}</span>
+        <span class="section-count">${sec.items.length} ingredientes</span>
+      </div>
+      ${sec.items.map(item => {
+        const state = firebaseData[item.id];
+        const isDone = state && state.comprado;
+        const quien = isDone ? state.quien : null;
+        const isMe = quien === userName;
+        return `
+          <div class="item ${isDone?'done':''}" data-id="${item.id}" onclick="toggle('${item.id}')">
+            <div class="checkbox ${isDone?'checked':''}"></div>
+            <div class="item-body">
+              <div class="item-top">
+                <span class="item-name">${item.nombre}</span>
+                <span class="item-qty">${item.qty}</span>
+              </div>
+              <div class="item-meta">
+                ${item.recetas.map(r=>`<span class="recipe-pill">${r}</span>`).join('')}
+                ${item.obs?`<span class="item-obs">${item.obs}</span>`:''}
+              </div>
+              ${isDone ? `<p class="who-badge">✓ Comprado por ${isMe ? 'ti' : quien}</p>` : ''}
+            </div>
+          </div>`;
+      }).join('')}
+    </div>
+  `).join('');
+}
+</script>
+</body>
+</html>
